@@ -1,0 +1,43 @@
+{
+	"info": {
+		"_postman_id": "1e4eae33-9ad1-4ee4-8bce-6b47c20324cc",
+		"name": "Cloudflare Workers",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "MarketsWatch Sample",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "symbol",
+						"value": "AAPL",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"symbol\": \"EDP.LS\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "marketswatch.jtiagodev.workers.dev",
+					"host": [
+						"marketswatch",
+						"jtiagodev",
+						"workers",
+						"dev"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
