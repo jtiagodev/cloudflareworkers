@@ -1,4 +1,13 @@
 /**
+ * @author João Tiago <jtiagodev@gmail.com>
+ * Allows you to retrieve detailed information on any financial symbol available at Yahoo Finance, leveraging KV for caching data
+ * 1. The data aggregation retrieved consists on several service calls
+ * 2. Response is cached for subsequent requests
+ * 3. At 24:00 UTC all records stored in KV are refreshed with up-to-date data
+ * 4. You can skip cached data with skipCache flag
+ */
+
+/**
  * Listener for Incoming Requests
  */
 addEventListener("fetch", (event) => {
