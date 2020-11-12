@@ -22,13 +22,21 @@ addEventListener("scheduled", (event) => {
 });
 
 /**
+ * Routes Configuration
+ */
+const routes = {
+  "/stockinfo": (request) => handleInfoRequests(request),
+  "/stocksupres": (request) => handleSupResRequests(request),
+};
+
+/**
  * Appends key to value
  */
 async function updateMarketWatchKeys(symbol) {
   const keys = await MARKETWATCH_SYMBOLS.get("KEYS");
   const updatedKeys = keys + symbol + ",";
   await MARKETWATCH_SYMBOLS.put("KEYS", updatedKeys);
-};
+}
 
 /**
  * If KEYS isn't set yet, initialize it
@@ -38,7 +46,7 @@ async function initMarketWatchKeys() {
   if (keys === null) {
     await MARKETWATCH_SYMBOLS.put("KEYS", "");
   }
-};
+}
 
 /**
  * Work-around for .keys()
@@ -53,25 +61,25 @@ async function getMarketWatchKeys() {
   const keysToArray = keys.split(",");
   keysToArray.pop(); // removes last entry
   return keysToArray;
-};
+}
 
 async function setCache(key, value) {
   await MARKETWATCH_SYMBOLS.put(key, value);
-};
+}
 
 async function getCache(key) {
   const value = MARKETWATCH_SYMBOLS.get(key);
   return value;
-};
+}
 
 function delay(miliseconds = 1000) {
-    setTimeout(() => {}, miliseconds);
+  setTimeout(() => {}, miliseconds);
 }
 
 /**
- * 
- * @param {*} uri 
- * @param {*} dataPath - string with data path to retrieve (eg, "a.b.etc") 
+ *
+ * @param {*} uri
+ * @param {*} dataPath - string with data path to retrieve (eg, "a.b.etc")
  */
 async function fetchData(uri, dataPath) {
   try {
@@ -93,20 +101,50 @@ async function fetchData(uri, dataPath) {
 async function getYahooStockInfo(symbol) {
   const baseURL = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=`;
   try {
-  const modulesToFetch = ["summaryProfile", "summaryDetail", "esgScores", "price", "assetProfile", "incomeStatementHistoryQuarterly", "balanceSheetHistory", "balanceSheetHistoryQuarterly", "cashflowStatementHistory", "defaultKeyStatistics", "financialData", "calendarEvents", "secFilings", "recommendationTrend", "upgradeDowngradeHistory", "institutionOwnership", "fundOwnership", "majorDirectHolders", "majorHoldersBreakdown", "insiderTransactions", "insiderHolders", "netSharePurchaseActivity", "earnings", "earningsHistory", "earningsTrend", "industryTrend", "indexTrend", "sectorTrend", "cashflowStatementHistoryQuarterly"];
-  let stockInfo = {};
-  for(let i = 0; i < modulesToFetch.length; i++) {
+    const modulesToFetch = [
+      "summaryProfile",
+      "summaryDetail",
+      "esgScores",
+      "price",
+      "assetProfile",
+      "incomeStatementHistoryQuarterly",
+      "balanceSheetHistory",
+      "balanceSheetHistoryQuarterly",
+      "cashflowStatementHistory",
+      "defaultKeyStatistics",
+      "financialData",
+      "calendarEvents",
+      "secFilings",
+      "recommendationTrend",
+      "upgradeDowngradeHistory",
+      "institutionOwnership",
+      "fundOwnership",
+      "majorDirectHolders",
+      "majorHoldersBreakdown",
+      "insiderTransactions",
+      "insiderHolders",
+      "netSharePurchaseActivity",
+      "earnings",
+      "earningsHistory",
+      "earningsTrend",
+      "industryTrend",
+      "indexTrend",
+      "sectorTrend",
+      "cashflowStatementHistoryQuarterly",
+    ];
+    let stockInfo = {};
+    for (let i = 0; i < modulesToFetch.length; i++) {
       const dataPath = `quoteSummary.result.0.${modulesToFetch[i]}`;
       const uri = `${baseURL}${modulesToFetch[i]}`;
       if (i % 5 === 0) delay(1000); // rate limit 5 calls/sec
       const data = await fetchData(uri, dataPath);
       stockInfo[modulesToFetch[i]] = data;
-  }
+    }
     return stockInfo;
   } catch (err) {
     throw new Error(400);
   }
-};
+}
 
 /**
  * Refreshes Cache Data with the Scheduler
@@ -126,9 +164,9 @@ async function refreshCache(event) {
 
 /**
  * Handles POST requests
- * @param {} request 
+ * @param {} request
  */
-async function handlePostRequest(request) {
+async function handleInfoPostRequest(request) {
   try {
     let body = await request.json();
     const symbol = body.symbol;
@@ -141,7 +179,7 @@ async function handlePostRequest(request) {
       });
     }
     await initMarketWatchKeys();
-    
+
     let res;
     if (!skipCache) {
       const value = await getCache(symbol);
@@ -160,7 +198,6 @@ async function handlePostRequest(request) {
       res = JSON.stringify(data);
     }
     return new Response(res, { status: 200 });
-
   } catch (err) {
     return new Response(err, { status: 400 });
   }
@@ -168,10 +205,25 @@ async function handlePostRequest(request) {
 
 /**
  * Fallback handler for other request methods
- * @param {} request 
+ * @param {} request
  */
-async function handleDefaultRequest(request) {
+async function handleInfoDefaultRequest(request) {
   return new Response(`Request data from symbol (@Body) using POST`);
+}
+
+async function handleSupResRequests(request) {
+  return new Response(`Sup Res Request Received`);
+}
+
+async function handleInfoRequests(request) {
+  switch (request.method) {
+    case "POST":
+      return await handleInfoPostRequest(request);
+      break;
+    default:
+      return await handleInfoDefaultRequest(request);
+      break;
+  }
 }
 
 /**
@@ -179,12 +231,9 @@ async function handleDefaultRequest(request) {
  * @param {Request} request
  */
 async function handleRequest(request) {
-  switch (request.method) {
-    case "POST":
-      return await handlePostRequest(request);
-      break;
-    default:
-      return await handleDefaultRequest(request);
-      break;
+  const url = new URL(request.url);
+  if (url.pathname in routes) {
+    return await routes[url.pathname](request);
   }
+  return new Response(`Services available POST /stockinfo & POST /stocksupres`);
 }
