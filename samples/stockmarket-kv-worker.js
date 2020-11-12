@@ -55,6 +55,10 @@ async function getCache(key) {
   return value;
 };
 
+function delay(miliseconds = 1000) {
+    setTimeout(() => {}, miliseconds);
+}
+
 /**
  * 
  * @param {*} uri 
@@ -79,75 +83,17 @@ async function fetchData(uri, dataPath) {
 
 async function getYahooStockInfo(symbol) {
   const baseURL = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=`;
-  // summaryProfile = summaryProfileJSON.quoteSummary.result[0].summaryProfile
   try {
-
-    // rate limit 5 calls/sec
-  const summaryProfile = await fetchData(`${baseURL}summaryProfile`, "quoteSummary.result.0.summaryProfile");
-  // const summaryDetailRes = await fetchData(`${baseURL}summaryDetail`);
-
-
-  // const summaryDetail = await fetch(`${baseURL}summaryDetail`);
-  // const summaryDetailJSON = await summaryDetail.json();
-
-  // const esgScores = await fetch(`${baseURL}esgScores`);
-  // const price = await fetch(`${baseURL}price`);
-  // const incomeStatementHistory = await fetch(
-  //   `${baseURL}incomeStatementHistory`
-  // );
-  // setTimeout(() => {}, 1000);
-  // const assetProfile = await fetch(`${baseURL}assetProfile`);
-  // const incomeStatementHistoryQuarterly = await fetch(
-  //   `${baseURL}incomeStatementHistoryQuarterly`
-  // );
-  // const balanceSheetHistory = await fetch(`${baseURL}balanceSheetHistory`);
-  // const balanceSheetHistoryQuarterly = await fetch(
-  //   `${baseURL}balanceSheetHistoryQuarterly`
-  // );
-  // const cashflowStatementHistory = await fetch(
-  //   `${baseURL}cashflowStatementHistory`
-  // );
-  // setTimeout(() => {}, 1000);
-  // const defaultKeyStatistics = await fetch(
-  //   `${baseURL}defaultKeyStatistics`
-  // );
-  // const financialData = await fetch(`${baseURL}financialData`);
-  // const calendarEvents = await fetch(`${baseURL}calendarEvents`);
-  // const secFilings = await fetch(`${baseURL}secFilings`);
-  // const recommendationTrend = await fetch(`${baseURL}recommendationTrend`);
-  // setTimeout(() => {}, 1000);
-  // const upgradeDowngradeHistory = await fetch(
-  //   `${baseURL}upgradeDowngradeHistory`
-  // );
-  // const institutionOwnership = await fetch(
-  //   `${baseURL}institutionOwnership`
-  // );
-  // const fundOwnership = await fetch(`${baseURL}fundOwnership`);
-  // const majorDirectHolders = await fetch(`${baseURL}majorDirectHolders`);
-  // const majorHoldersBreakdown = await fetch(
-  //   `${baseURL}majorHoldersBreakdown`
-  // );
-  // setTimeout(() => {}, 1000);
-  // const insiderTransactions = await fetch(`${baseURL}insiderTransactions`);
-  // const insiderHolders = await fetch(`${baseURL}insiderHolders`);
-  // const netSharePurchaseActivity = await fetch(
-  //   `${baseURL}netSharePurchaseActivity`
-  // );
-  // const earnings = await fetch(`${baseURL}earnings`);
-  // const earningsHistory = await fetch(`${baseURL}earningsHistory`);
-  // setTimeout(() => {}, 1000);
-  // const earningsTrend = await fetch(`${baseURL}earningsTrend`);
-  // const industryTrend = await fetch(`${baseURL}industryTrend`);
-  // const indexTrend = await fetch(`${baseURL}indexTrend`);
-  // const sectorTrend = await fetch(`${baseURL}sectorTrend`);
-  // const cashflowStatementHistoryQuarterly = await fetch(
-  //   `${baseURL}cashflowStatementHistoryQuarterly`
-  // );
-
-  //   const summaryProfile = await fetch(`${baseURL}summaryProfile`);
-  //   const summaryProfileJSON = await summaryProfile.json();
-  //   const data = summaryProfileJSON.quoteSummary.result[0].summaryProfile;
-    return summaryProfile;
+  const modulesToFetch = ["summaryProfile", "summaryDetail", "esgScores", "price", "assetProfile", "incomeStatementHistoryQuarterly", "balanceSheetHistory", "balanceSheetHistoryQuarterly", "cashflowStatementHistory", "defaultKeyStatistics", "financialData", "calendarEvents", "secFilings", "recommendationTrend", "upgradeDowngradeHistory", "institutionOwnership", "fundOwnership", "majorDirectHolders", "majorHoldersBreakdown", "insiderTransactions", "insiderHolders", "netSharePurchaseActivity", "earnings", "earningsHistory", "earningsTrend", "industryTrend", "indexTrend", "sectorTrend", "cashflowStatementHistoryQuarterly"];
+  let stockInfo = {};
+  for(let i = 0; i < modulesToFetch.length; i++) {
+      const dataPath = `quoteSummary.result.0.${modulesToFetch[i]}`;
+      const uri = `${baseURL}${modulesToFetch[i]}`;
+      if (i % 5 === 0) delay(1000); // rate limit 5 calls/sec
+      const data = await fetchData(uri, dataPath);
+      stockInfo[modulesToFetch[i]] = data;
+  }
+    return stockInfo;
   } catch (err) {
     throw new Error(400);
   }
@@ -177,6 +123,7 @@ async function handlePostRequest(request) {
   try {
     let body = await request.json();
     const symbol = body.symbol;
+    const skipCache = body.skipCache;
 
     if (!symbol) {
       return new Response(null, {
@@ -185,18 +132,26 @@ async function handlePostRequest(request) {
       });
     }
     await initMarketWatchKeys();
-    // Reads cached value from KV
-    const value = await getCache(symbol);
+    
     let res;
-    if (value === null) {
+    if (!skipCache) {
+      const value = await getCache(symbol);
+      if (value === null) {
+        const data = await getYahooStockInfo(symbol);
+        await setCache(symbol, JSON.stringify(data));
+        await updateMarketWatchKeys(symbol);
+        res = JSON.stringify(data);
+      } else {
+        res = JSON.stringify(value);
+      }
+    } else {
       const data = await getYahooStockInfo(symbol);
       await setCache(symbol, JSON.stringify(data));
       await updateMarketWatchKeys(symbol);
       res = JSON.stringify(data);
-    } else {
-      res = JSON.stringify(value);
     }
     return new Response(res, { status: 200 });
+
   } catch (err) {
     return new Response(err, { status: 400 });
   }
