@@ -19,7 +19,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"symbol\": \"EDP.LS\"\r\n}",
+					"raw": "{\r\n    \"symbol\": \"BCP.LS\",\r\n    \"skipCache\": false\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
