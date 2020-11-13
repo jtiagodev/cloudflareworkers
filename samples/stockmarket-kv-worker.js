@@ -244,8 +244,26 @@ function renderHtmlContent(html) {
   });
 }
 
+/**
+ * Utils UNIX timestamp converter
+ * @param {} UNIX_timestamp 
+ */
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp * 1000);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+  return time;
+}
+
 function supResHtmlTemplate(data) {
   const {
+    timestamp,
     symbol,
     open,
     low,
@@ -260,65 +278,134 @@ function supResHtmlTemplate(data) {
     secondRes,
     thirdRes,
   } = data;
-
+  
   return `<!DOCTYPE html>
   <html>
 <head>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 </head>
-
             <style>
-            .stock-info-boxes-container {
+            .flex-col {
+              display: flex;
+              flex-direction: column;
+            }
+            .flex-row {
               display: flex;
               flex-direction: row;
-              justify-content: center;
-              align-items: center;
             }
 
-            .stock-info-box {
-              display: flex;
-              flex-direction: column;
-              justify-content: flex-start;
+            .supres-label {
+              font-size: 20px;
+              color: #5b636a;
             }
-
-            .stock-info-wrapper {
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
+            .supres-text {
+              font-size: 24px;
+              color: black;
+              font-weight: bold;
             }
-
+            .powered {
+              font-size: 10px;
+              color: #7A7A7B;
+            }
             body {
-              background-color: #0D5D9B;
+              background-color: white;
+              font-family: 'Roboto';
             }
             </style>
 
             <body>
-              <div class="stock-info-wrapper">
-              <h1>Supports & Resistances for ${symbol}</h1>
-              <div class="stock-info-boxes-container">
-              <div class="stock-info-box">
-              <div><i class="fa fa-car"></i> <p>Open ${open.toFixed(3)}</p></div>
-                  <p>Low ${low.toFixed(3)}</p>
-                  <p>High ${high.toFixed(3)}</p>
-                  <p>Close ${close.toFixed(3)}</p>
-                  <p>Volume ${volume}</p>
+            
+              <div class="flex-col" style="margin:10px;">
+              <div class="flex-row">
+              <h1 style="color:#EF750A;margin-right:20px;">SUPPORTS & RESISTANCES</h1>
+              <input placeholder="SYMBOL" type="text" id="symbol"></input>
               </div>
-              <div class="stock-info-box">
-                  <p>3<sup>rd</sup> Resistance ${thirdRes.toFixed(3)}</p>
-                  <p>2<sup>nd</sup> Resistance ${secondRes.toFixed(3)}</p>
-                  <p>1<sup>st</sup> Resistance ${firstRes.toFixed(3)}</p>
-                  <p>PIVOT ${p.toFixed(3)}</p>
-                  <p>1<sup>st</sup> Support ${firstSup.toFixed(3)}</p>
-                  <p>2<sup>nd</sup> Support ${secondSup.toFixed(3)}</p>
-                  <p>3<sup>rd</sup> Support ${thirdSup.toFixed(3)}</p>
+              
+              <div class="flex-row" style="margin:40px 0px;">
+              <div class="flex-col">
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">DATE:</span> 
+              <span class="supres-text">${timeConverter(timestamp)}</span>
               </div>
-              </div>
-              <p>powered by</p>
-              <img alt="Cloudflare Worker" src="https://blog.cloudflare.com/content/images/2019/06/45DEDC7B-B31F-461C-B786-12FBAF1A5391.png" height="40" />
-              <img alt="BullAdvisor" src="https://scontent.flis8-1.fna.fbcdn.net/v/t1.0-9/1609743_505303869585046_231642735_n.png?_nc_cat=111&ccb=2&_nc_sid=09cbfe&_nc_ohc=4KItFgTwYTkAX-1yWIR&_nc_ht=scontent.flis8-1.fna&oh=c57987e9fa6d92f74dae1cadcc45bc1b&oe=5FD3A68B" height="40" />
 
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">OPEN:</span> 
+              <span class="supres-text">${open.toFixed(3)}</span>
               </div>
+
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">LOW:</span> 
+              <span class="supres-text">${low.toFixed(3)}</span>
+              </div>
+
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">HIGH:</span> 
+              <span class="supres-text">${high.toFixed(3)}</span>
+              </div>
+
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">CLOSE:</span> 
+              <span class="supres-text">${close.toFixed(3)}</span>
+              </div>
+
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">VOLUME:</span> 
+              <span class="supres-text">${volume}</span>
+              </div> 
+              </div>
+
+              <div class="flex-col" style="margin-left: 100px;">
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">3RD RESISTANCE:</span> 
+              <span class="supres-text">${thirdRes.toFixed(3)}</span>
+              </div> 
+
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">2ND RESISTANCE:</span> 
+              <span class="supres-text">${secondRes.toFixed(3)}</span>
+              </div> 
+
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">1ST RESISTANCE:</span> 
+              <span class="supres-text">${firstRes.toFixed(3)}</span>
+              </div> 
+
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">PIVOT:</span> 
+              <span class="supres-text">${p.toFixed(3)}</span>
+              </div> 
+
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">1ST SUPPORT:</span> 
+              <span class="supres-text">${firstSup.toFixed(3)}</span>
+              </div> 
+
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">2ND SUPPORT:</span> 
+              <span class="supres-text">${secondSup.toFixed(3)}</span>
+              </div> 
+
+              <div class="flex-col" style="margin-top:10px;">
+              <span class="supres-label">3RD SUPPORT:</span> 
+              <span class="supres-text">${thirdSup.toFixed(3)}</span>
+              </div> 
+              </div>
+              </div>
+
+
+              <p class="powered">POWERED BY</p>
+              <img alt="Cloudflare Worker" src="https://blog.cloudflare.com/content/images/2019/06/45DEDC7B-B31F-461C-B786-12FBAF1A5391.png" width="150px" />
+              </div>
+
+              <script>
+             const input = document.querySelector("#symbol");
+             input.value = "${symbol}";
+             input.addEventListener("change", function (evt) {
+              window.location.href = window.location.origin + window.location.pathname + "?symbol=" + evt.target.value;
+            })
+            </script>
             </body>
             </html>`;
 }
