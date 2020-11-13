@@ -6,7 +6,7 @@
  * 2. Response is cached for subsequent requests
  * 3. At 24:00 UTC all records stored in KV are refreshed with up-to-date data
  * 4. You can skip cached data with skipCache flag
- * 
+ *
  * https://marketswatch.jtiagodev.workers.dev/stocksupres
  * Allows you to retrieve resistances and supports information on any financial symbol available at Yahoo Finance
  */
@@ -234,12 +234,101 @@ async function handleInfoPostRequest(request) {
   }
 }
 
+/**
+ * Renders HTML content as a response
+ * @param {} html
+ */
+function renderHtmlContent(html) {
+  return new Response(html, {
+    headers: { "content-type": "text/html;charset=UTF-8" },
+  });
+}
+
+function supResHtmlTemplate(data) {
+  const {
+    symbol,
+    open,
+    low,
+    high,
+    close,
+    volume,
+    firstSup,
+    secondSup,
+    thirdSup,
+    p,
+    firstRes,
+    secondRes,
+    thirdRes,
+  } = data;
+
+  return `<!DOCTYPE html>
+  <html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+            <style>
+            .stock-info-boxes-container {
+              display: flex;
+              flex-direction: row;
+              justify-content: center;
+              align-items: center;
+            }
+
+            .stock-info-box {
+              display: flex;
+              flex-direction: column;
+              justify-content: flex-start;
+            }
+
+            .stock-info-wrapper {
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+            }
+
+            body {
+              background-color: #0D5D9B;
+            }
+            </style>
+
+            <body>
+              <div class="stock-info-wrapper">
+              <h1>Supports & Resistances for ${symbol}</h1>
+              <div class="stock-info-boxes-container">
+              <div class="stock-info-box">
+              <div><i class="fa fa-car"></i> <p>Open ${open.toFixed(3)}</p></div>
+                  <p>Low ${low.toFixed(3)}</p>
+                  <p>High ${high.toFixed(3)}</p>
+                  <p>Close ${close.toFixed(3)}</p>
+                  <p>Volume ${volume}</p>
+              </div>
+              <div class="stock-info-box">
+                  <p>3<sup>rd</sup> Resistance ${thirdRes.toFixed(3)}</p>
+                  <p>2<sup>nd</sup> Resistance ${secondRes.toFixed(3)}</p>
+                  <p>1<sup>st</sup> Resistance ${firstRes.toFixed(3)}</p>
+                  <p>PIVOT ${p.toFixed(3)}</p>
+                  <p>1<sup>st</sup> Support ${firstSup.toFixed(3)}</p>
+                  <p>2<sup>nd</sup> Support ${secondSup.toFixed(3)}</p>
+                  <p>3<sup>rd</sup> Support ${thirdSup.toFixed(3)}</p>
+              </div>
+              </div>
+              <p>powered by</p>
+              <img alt="Cloudflare Worker" src="https://blog.cloudflare.com/content/images/2019/06/45DEDC7B-B31F-461C-B786-12FBAF1A5391.png" height="40" />
+              <img alt="BullAdvisor" src="https://scontent.flis8-1.fna.fbcdn.net/v/t1.0-9/1609743_505303869585046_231642735_n.png?_nc_cat=111&ccb=2&_nc_sid=09cbfe&_nc_ohc=4KItFgTwYTkAX-1yWIR&_nc_ht=scontent.flis8-1.fna&oh=c57987e9fa6d92f74dae1cadcc45bc1b&oe=5FD3A68B" height="40" />
+
+              </div>
+            </body>
+            </html>`;
+}
+
 function computeSupRes(data) {
   const { open, low, high, close } = data;
   const p = (open + high + low + close) / 4;
   return {
     p,
-    thirdRes: p * (high - low),
+    thirdRes: p + 2 * (high - low),
     secondRes: p + (high - low),
     firstRes: p * 2 - low,
     firstSup: p * 2 - high,
@@ -264,15 +353,14 @@ async function supResController(symbol) {
         statusText: `Symbol not provided`,
       });
     }
-  
-    let res = {};
+
     const data = await getYahooStockLastDay(symbol);
     const computedSupRes = computeSupRes(data);
-    res = { ...data, ...computedSupRes };
-    return new Response(JSON.stringify(res), { status: 200 });
+    const response = { ...data, ...computedSupRes, symbol };
+    return renderHtmlContent(supResHtmlTemplate(response));
   } catch (err) {
     throw new Error(400);
-  } 
+  }
 }
 
 async function handleSupResPostRequests(request) {
@@ -326,5 +414,7 @@ async function handleRequest(request) {
   if (url.pathname in routes) {
     return await routes[url.pathname](request);
   }
-  return new Response(`Services available POST|GET /stockinfo & POST|GET /stocksupres`);
+  return new Response(
+    `Services available POST|GET /stockinfo & POST|GET /stocksupres`
+  );
 }
