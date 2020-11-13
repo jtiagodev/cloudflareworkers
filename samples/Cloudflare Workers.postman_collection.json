@@ -6,14 +6,14 @@
 	},
 	"item": [
 		{
-			"name": "MarketsWatch Sample",
+			"name": "MarketsWatch StockInfo",
 			"request": {
 				"method": "POST",
 				"header": [
 					{
 						"key": "symbol",
-						"value": "AAPL",
 						"type": "text",
+						"value": "AAPL",
 						"disabled": true
 					}
 				],
@@ -27,12 +27,44 @@
 					}
 				},
 				"url": {
-					"raw": "marketswatch.jtiagodev.workers.dev",
+					"raw": "marketswatch.jtiagodev.workers.dev/stockinfo",
 					"host": [
 						"marketswatch",
 						"jtiagodev",
 						"workers",
 						"dev"
+					],
+					"path": [
+						"stockinfo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "MarketsWatch StockSupRes",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"symbol\": \"EDP.LS\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "marketswatch.jtiagodev.workers.dev/stocksupres",
+					"host": [
+						"marketswatch",
+						"jtiagodev",
+						"workers",
+						"dev"
+					],
+					"path": [
+						"stocksupres"
 					]
 				}
 			},
