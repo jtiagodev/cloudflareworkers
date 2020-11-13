@@ -27,7 +27,7 @@
 					}
 				},
 				"url": {
-					"raw": "marketswatch.jtiagodev.workers.dev/stockinfo",
+					"raw": "marketswatch.jtiagodev.workers.dev/info",
 					"host": [
 						"marketswatch",
 						"jtiagodev",
@@ -35,14 +35,17 @@
 						"dev"
 					],
 					"path": [
-						"stockinfo"
+						"info"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "MarketsWatch StockSupRes",
+			"name": "MarketsWatch Stock Supports & Resistances (json)",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -56,7 +59,7 @@
 					}
 				},
 				"url": {
-					"raw": "marketswatch.jtiagodev.workers.dev/stocksupres",
+					"raw": "marketswatch.jtiagodev.workers.dev/",
 					"host": [
 						"marketswatch",
 						"jtiagodev",
@@ -64,7 +67,39 @@
 						"dev"
 					],
 					"path": [
-						"stocksupres"
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "MarketsWatch Stock Supports & Resistances (html)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/html",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "marketswatch.jtiagodev.workers.dev",
+					"host": [
+						"marketswatch",
+						"jtiagodev",
+						"workers",
+						"dev"
 					]
 				}
 			},

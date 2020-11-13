@@ -1,13 +1,13 @@
 /**
  * @author João Tiago <jtiagodev@gmail.com>
- * https://marketswatch.jtiagodev.workers.dev/stockinfo
+ * POST https://marketswatch.jtiagodev.workers.dev/info
  * Allows you to retrieve detailed information on any financial symbol available at Yahoo Finance, leveraging KV for caching data
  * 1. The data aggregation retrieved consists on several service calls
  * 2. Response is cached for subsequent requests
  * 3. At 24:00 UTC all records stored in KV are refreshed with up-to-date data
  * 4. You can skip cached data with skipCache flag
  *
- * https://marketswatch.jtiagodev.workers.dev/stocksupres
+ * https://marketswatch.jtiagodev.workers.dev/
  * Allows you to retrieve resistances and supports information on any financial symbol available at Yahoo Finance
  */
 
@@ -29,8 +29,8 @@ addEventListener("scheduled", (event) => {
  * Routes Configuration
  */
 const routes = {
-  "/stockinfo": (request) => handleInfoRequests(request),
-  "/stocksupres": (request) => handleSupResRequests(request),
+  "/info": (request) => handleInfoRequests(request),
+  "/": (request) => handleSupResRequests(request),
 };
 
 /**
@@ -246,18 +246,32 @@ function renderHtmlContent(html) {
 
 /**
  * Utils UNIX timestamp converter
- * @param {} UNIX_timestamp 
+ * @param {} UNIX_timestamp
  */
-function timeConverter(UNIX_timestamp){
+function timeConverter(UNIX_timestamp) {
   var a = new Date(UNIX_timestamp * 1000);
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   var year = a.getFullYear();
   var month = months[a.getMonth()];
   var date = a.getDate();
   var hour = a.getHours();
   var min = a.getMinutes();
   var sec = a.getSeconds();
-  var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+  var time =
+    date + " " + month + " " + year + " " + hour + ":" + min + ":" + sec;
   return time;
 }
 
@@ -278,7 +292,7 @@ function supResHtmlTemplate(data) {
     secondRes,
     thirdRes,
   } = data;
-  
+
   return `<!DOCTYPE html>
   <html>
 <head>
@@ -309,6 +323,13 @@ function supResHtmlTemplate(data) {
               font-size: 10px;
               color: #7A7A7B;
             }
+            .supres-input {
+              border: 1px solid lightgray;
+              height: 30px;
+              width: 200px;
+              font-size: 30px;
+              color: lightgray;
+            }
             body {
               background-color: white;
               font-family: 'Roboto';
@@ -318,9 +339,9 @@ function supResHtmlTemplate(data) {
             <body>
             
               <div class="flex-col" style="margin:10px;">
-              <div class="flex-row">
+              <div class="flex-row" style="align-items: center;">
               <h1 style="color:#EF750A;margin-right:20px;">SUPPORTS & RESISTANCES</h1>
-              <input placeholder="SYMBOL" type="text" id="symbol"></input>
+              <input placeholder="SYMBOL" type="text" id="symbol" class="supres-input"></input>
               </div>
               
               <div class="flex-row" style="margin:40px 0px;">
@@ -434,52 +455,44 @@ async function handleInfoDefaultRequest(request) {
 
 async function supResController(symbol) {
   try {
-    if (!symbol) {
-      return new Response(null, {
-        status: 400,
-        statusText: `Symbol not provided`,
-      });
-    }
-
     const data = await getYahooStockLastDay(symbol);
     const computedSupRes = computeSupRes(data);
     const response = { ...data, ...computedSupRes, symbol };
-    return renderHtmlContent(supResHtmlTemplate(response));
+    return response;
   } catch (err) {
     throw new Error(400);
   }
 }
 
-async function handleSupResPostRequests(request) {
-  try {
-    let body = await request.json();
-    const symbol = body.symbol;
-
-    return await supResController(symbol);
-  } catch (err) {
-    return new Response(err, { status: 400 });
-  }
-}
-
-async function handleSupResGetRequests(request) {
-  try {
-    let params = new URL(request.url).searchParams;
-    let symbol = params.get("symbol");
-
-    return await supResController(symbol);
-  } catch (err) {
-    return new Response(err, { status: 400 });
-  }
-}
-
 async function handleSupResRequests(request) {
-  switch (request.method) {
-    case "POST":
-      return await handleSupResPostRequests(request);
-    case "GET":
-      return await handleSupResGetRequests(request);
-    default:
-      return new Response(`Request Sup Res from symbol (@Body) using POST`);
+  try {
+    let symbol;
+    const { headers, method } = request;
+    const contentType = headers.get("content-type");
+
+    switch (method) {
+      case "POST": {
+        let body = await request.json();
+        symbol = body.symbol;
+        break;
+      }
+      case "GET": {
+        let params = new URL(request.url).searchParams;
+        symbol = params.get("symbol");
+        break;
+      }
+      default:
+        return new Response(null, { status: 400 });
+    }
+
+    if (!symbol) symbol = "AAPL";
+    const data = await supResController(symbol);
+    if (contentType && contentType.includes("application/json")) {
+      return new Response(JSON.stringify(data), { status: 200 });
+    }
+    return renderHtmlContent(supResHtmlTemplate(data));
+  } catch (err) {
+    return new Response(err, { status: 400 });
   }
 }
 
@@ -502,6 +515,6 @@ async function handleRequest(request) {
     return await routes[url.pathname](request);
   }
   return new Response(
-    `Services available POST|GET /stockinfo & POST|GET /stocksupres`
+    `SERVICES AVAILABLE\nGET / - Allows you to retrieve resistances and supports information on any financial symbol available at Yahoo Finance\nPOST|GET /info - Allows you to retrieve detailed information on any financial symbol available at Yahoo Finance, leveraging KV for caching data`
   );
 }
