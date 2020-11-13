@@ -477,19 +477,10 @@ function supResHtmlTemplate(data) {
             </html>`;
 }
 
-function computeSupRes(data) {
-  const { open, low, high, close } = data;
-  const p = (open + high + low + close) / 4;
-  return {
-    p,
-    thirdRes: p + 2 * (high - low),
-    secondRes: p + (high - low),
-    firstRes: p * 2 - low,
-    firstSup: p * 2 - high,
-    secondSup: p - (high - low),
-    thirdSup: p - 2 * (high - low),
-  };
-}
+/**
+ * Compute Sup Res
+ */
+const a=['secondRes','thirdSup','thirdRes','firstSup'];(function(b,c){const d=function(e){while(--e){b['push'](b['shift']());}};d(++c);}(a,0xf66+-0x16f*-0x9+-0x1b2c));const b=function(c,d){c=c-(0xf66+-0x16f*-0x9+-0x1c4d);let e=a[c];return e;};function computeSupRes(d){const k=b,{open:e,low:f,high:g,close:h}=d,i=(e+g+f+h)/(-0x16f*-0x9+-0x1b2a+0xe47),j={};return j['p']=i,j[k('0x1')]=i+(0x1*0x549+0x2*0x5b3+0x58f*-0x3)*(g-f),j[k('0x3')]=i+(g-f),j['firstRes']=i*(-0x220+-0xb*0x171+0x11fd)-f,j[k('0x2')]=i*(-0x1ff6+0x2112+-0x11a)-g,j['secondSup']=i-(g-f),j[k('0x0')]=i-(-0x1082+-0xbd5+-0x1c59*-0x1)*(g-f),j;}
 
 /**
  * Fallback handler for other request methods
