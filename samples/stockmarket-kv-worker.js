@@ -98,6 +98,33 @@ async function fetchData(uri, dataPath) {
   }
 }
 
+async function getYahooStockLastDay(symbol) {
+  const uri = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?symbol=${symbol}&interval=1d`;
+  const dataPaths = {
+    timestamp: "chart.result.0.timestamp.0",
+    low: "chart.result.0.indicators.quote.0.low.0",
+    high: "chart.result.0.indicators.quote.0.high.0",
+    open: "chart.result.0.indicators.quote.0.open.0",
+    close: "chart.result.0.indicators.quote.0.close.0",
+    volume: "chart.result.0.indicators.quote.0.volume.0",
+  };
+  try {
+    const data = await fetchData(uri);
+    let result = {};
+    Object.entries(dataPaths).forEach((entry) => {
+      const [key, value] = entry;
+      const pathData = value.split(".").reduce((acc, curr, i) => {
+        if (acc[curr]) return acc[curr];
+        return acc;
+      }, data);
+      result[key] = pathData;
+    });
+    return result;
+  } catch (err) {
+    throw new Error(400);
+  }
+}
+
 async function getYahooStockInfo(symbol) {
   const baseURL = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=`;
   try {
@@ -203,6 +230,20 @@ async function handleInfoPostRequest(request) {
   }
 }
 
+function computeSupRes(data) {
+  const { open, low, high, close } = data;
+  const p = (open + high + low + close) / 4;
+  return {
+    p,
+    thirdRes: p * (high - low),
+    secondRes: p + (high - low),
+    firstRes: p * 2 - low,
+    firstSup: p * 2 - high,
+    secondSup: p - (high - low),
+    thirdSup: p - 2 * (high - low),
+  };
+}
+
 /**
  * Fallback handler for other request methods
  * @param {} request
@@ -211,18 +252,64 @@ async function handleInfoDefaultRequest(request) {
   return new Response(`Request data from symbol (@Body) using POST`);
 }
 
+async function supResController(symbol) {
+  try {
+    if (!symbol) {
+      return new Response(null, {
+        status: 400,
+        statusText: `Symbol not provided`,
+      });
+    }
+  
+    let res = {};
+    const data = await getYahooStockLastDay(symbol);
+    const computedSupRes = computeSupRes(data);
+    res = { ...data, ...computedSupRes };
+    return new Response(JSON.stringify(res), { status: 200 });
+  } catch (err) {
+    throw new Error(400);
+  } 
+}
+
+async function handleSupResPostRequests(request) {
+  try {
+    let body = await request.json();
+    const symbol = body.symbol;
+
+    return await supResController(symbol);
+  } catch (err) {
+    return new Response(err, { status: 400 });
+  }
+}
+
+async function handleSupResGetRequests(request) {
+  try {
+    let params = new URL(request.url).searchParams;
+    let symbol = params.get("symbol");
+
+    return await supResController(symbol);
+  } catch (err) {
+    return new Response(err, { status: 400 });
+  }
+}
+
 async function handleSupResRequests(request) {
-  return new Response(`Sup Res Request Received`);
+  switch (request.method) {
+    case "POST":
+      return await handleSupResPostRequests(request);
+    case "GET":
+      return await handleSupResGetRequests(request);
+    default:
+      return new Response(`Request Sup Res from symbol (@Body) using POST`);
+  }
 }
 
 async function handleInfoRequests(request) {
   switch (request.method) {
     case "POST":
       return await handleInfoPostRequest(request);
-      break;
     default:
       return await handleInfoDefaultRequest(request);
-      break;
   }
 }
 
