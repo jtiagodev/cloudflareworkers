@@ -102,15 +102,15 @@ async function fetchData(uri, dataPath) {
   }
 }
 
-async function getYahooStockLastDay(symbol) {
-  const uri = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?symbol=${symbol}&interval=1d`;
+async function getYahooStockLastDay(symbol, prevDay) {
+  const uri = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?symbol=${symbol}&period1=0&period2=9999999999&interval=1d`;
   const dataPaths = {
-    timestamp: "chart.result.0.timestamp.0",
-    low: "chart.result.0.indicators.quote.0.low.0",
-    high: "chart.result.0.indicators.quote.0.high.0",
-    open: "chart.result.0.indicators.quote.0.open.0",
-    close: "chart.result.0.indicators.quote.0.close.0",
-    volume: "chart.result.0.indicators.quote.0.volume.0",
+    timestamp: "chart.result.0.timestamp",
+    low: "chart.result.0.indicators.quote.0.low",
+    high: "chart.result.0.indicators.quote.0.high",
+    open: "chart.result.0.indicators.quote.0.open",
+    close: "chart.result.0.indicators.quote.0.close",
+    volume: "chart.result.0.indicators.quote.0.volume",
   };
   try {
     const data = await fetchData(uri);
@@ -121,7 +121,11 @@ async function getYahooStockLastDay(symbol) {
         if (acc[curr]) return acc[curr];
         return acc;
       }, data);
-      result[key] = pathData;
+      if (prevDay.toString() === "true") {
+        result[key] = pathData[pathData.length - 2];
+      } else {
+        result[key] = pathData[pathData.length - 1];
+      }
     });
     return result;
   } catch (err) {
@@ -291,6 +295,7 @@ function supResHtmlTemplate(data) {
     firstRes,
     secondRes,
     thirdRes,
+    prevDay
   } = data;
 
   return `<!DOCTYPE html>
@@ -308,6 +313,11 @@ function supResHtmlTemplate(data) {
             .flex-row {
               display: flex;
               flex-direction: row;
+            }
+
+            .supres-checkbox {
+              font-size: 15px;
+              color: lightgray;
             }
 
             .supres-label {
@@ -334,6 +344,34 @@ function supResHtmlTemplate(data) {
               background-color: white;
               font-family: 'Roboto';
             }
+
+            @keyframes flickerAnimation {
+              0%   { opacity:1; }
+              50%  { opacity:0; }
+              100% { opacity:1; }
+            }
+            @-o-keyframes flickerAnimation{
+              0%   { opacity:1; }
+              50%  { opacity:0; }
+              100% { opacity:1; }
+            }
+            @-moz-keyframes flickerAnimation{
+              0%   { opacity:1; }
+              50%  { opacity:0; }
+              100% { opacity:1; }
+            }
+            @-webkit-keyframes flickerAnimation{
+              0%   { opacity:1; }
+              50%  { opacity:0; }
+              100% { opacity:1; }
+            }
+            .animate-flicker {
+               -webkit-animation: flickerAnimation 1s infinite;
+               -moz-animation: flickerAnimation 1s infinite;
+               -o-animation: flickerAnimation 1s infinite;
+                animation: flickerAnimation 1s infinite;
+            }
+
             </style>
 
             <body>
@@ -343,7 +381,8 @@ function supResHtmlTemplate(data) {
               <h1 style="color:#EF750A;margin-right:20px;">SUPPORTS & RESISTANCES</h1>
               <input placeholder="SYMBOL" type="text" id="symbol" class="supres-input"></input>
               </div>
-              
+              <div><input type="checkbox" id="prevday" name="prevday"><span class="supres-checkbox">PREVIOUS DAY</span></div>
+
               <div class="flex-row" style="margin:40px 0px;">
               <div class="flex-col">
               <div class="flex-col" style="margin-top:10px;">
@@ -353,22 +392,22 @@ function supResHtmlTemplate(data) {
 
               <div class="flex-col" style="margin-top:10px;">
               <span class="supres-label">OPEN:</span> 
-              <span class="supres-text">${open.toFixed(3)}</span>
+              <span class="supres-text">${open.toFixed(4)}</span>
               </div>
 
               <div class="flex-col" style="margin-top:10px;">
               <span class="supres-label">LOW:</span> 
-              <span class="supres-text">${low.toFixed(3)}</span>
+              <span class="supres-text">${low.toFixed(4)}</span>
               </div>
 
               <div class="flex-col" style="margin-top:10px;">
               <span class="supres-label">HIGH:</span> 
-              <span class="supres-text">${high.toFixed(3)}</span>
+              <span class="supres-text">${high.toFixed(4)}</span>
               </div>
 
               <div class="flex-col" style="margin-top:10px;">
               <span class="supres-label">CLOSE:</span> 
-              <span class="supres-text">${close.toFixed(3)}</span>
+              <span class="supres-text">${close.toFixed(4)}</span>
               </div>
 
               <div class="flex-col" style="margin-top:10px;">
@@ -380,37 +419,37 @@ function supResHtmlTemplate(data) {
               <div class="flex-col" style="margin-left: 100px;">
               <div class="flex-col" style="margin-top:10px;">
               <span class="supres-label">3RD RESISTANCE:</span> 
-              <span class="supres-text">${thirdRes.toFixed(3)}</span>
+              <span class="supres-text">${thirdRes.toFixed(4)}</span>
               </div> 
 
               <div class="flex-col" style="margin-top:10px;">
               <span class="supres-label">2ND RESISTANCE:</span> 
-              <span class="supres-text">${secondRes.toFixed(3)}</span>
+              <span class="supres-text">${secondRes.toFixed(4)}</span>
               </div> 
 
               <div class="flex-col" style="margin-top:10px;">
               <span class="supres-label">1ST RESISTANCE:</span> 
-              <span class="supres-text">${firstRes.toFixed(3)}</span>
+              <span class="supres-text">${firstRes.toFixed(4)}</span>
               </div> 
 
               <div class="flex-col" style="margin-top:10px;">
               <span class="supres-label">PIVOT:</span> 
-              <span class="supres-text">${p.toFixed(3)}</span>
+              <span class="supres-text">${p.toFixed(4)}</span>
               </div> 
 
               <div class="flex-col" style="margin-top:10px;">
               <span class="supres-label">1ST SUPPORT:</span> 
-              <span class="supres-text">${firstSup.toFixed(3)}</span>
+              <span class="supres-text">${firstSup.toFixed(4)}</span>
               </div> 
 
               <div class="flex-col" style="margin-top:10px;">
               <span class="supres-label">2ND SUPPORT:</span> 
-              <span class="supres-text">${secondSup.toFixed(3)}</span>
+              <span class="supres-text">${secondSup.toFixed(4)}</span>
               </div> 
 
               <div class="flex-col" style="margin-top:10px;">
               <span class="supres-label">3RD SUPPORT:</span> 
-              <span class="supres-text">${thirdSup.toFixed(3)}</span>
+              <span class="supres-text">${thirdSup.toFixed(4)}</span>
               </div> 
               </div>
               </div>
@@ -423,9 +462,16 @@ function supResHtmlTemplate(data) {
               <script>
              const input = document.querySelector("#symbol");
              input.value = "${symbol}";
+             const checkbox = document.querySelector("#prevday");
+             checkbox.checked = ${prevDay};
+
              input.addEventListener("change", function (evt) {
-              window.location.href = window.location.origin + window.location.pathname + "?symbol=" + evt.target.value;
-            })
+              window.location.href = window.location.origin + window.location.pathname + "?symbol=" + evt.target.value + "&prevDay=" + "${prevDay}";
+             })
+
+             checkbox.addEventListener("change", function (evt) {
+              window.location.href = window.location.origin + window.location.pathname + "?symbol=" + "${symbol}" + "&prevDay=" + evt.target.checked;
+             })
             </script>
             </body>
             </html>`;
@@ -453,11 +499,11 @@ async function handleInfoDefaultRequest(request) {
   return new Response(`Request data from symbol (@Body) using POST`);
 }
 
-async function supResController(symbol) {
+async function supResController(symbol, prevDay) {
   try {
-    const data = await getYahooStockLastDay(symbol);
+    const data = await getYahooStockLastDay(symbol, prevDay);
     const computedSupRes = computeSupRes(data);
-    const response = { ...data, ...computedSupRes, symbol };
+    const response = { ...data, ...computedSupRes, symbol, prevDay };
     return response;
   } catch (err) {
     throw new Error(400);
@@ -467,6 +513,7 @@ async function supResController(symbol) {
 async function handleSupResRequests(request) {
   try {
     let symbol;
+    let prevDay;
     const { headers, method } = request;
     const contentType = headers.get("content-type");
 
@@ -474,11 +521,13 @@ async function handleSupResRequests(request) {
       case "POST": {
         let body = await request.json();
         symbol = body.symbol;
+        prevDay = body.prevDay;
         break;
       }
       case "GET": {
         let params = new URL(request.url).searchParams;
         symbol = params.get("symbol");
+        prevDay = params.get("prevDay");
         break;
       }
       default:
@@ -486,7 +535,8 @@ async function handleSupResRequests(request) {
     }
 
     if (!symbol) symbol = "AAPL";
-    const data = await supResController(symbol);
+    if (!prevDay) prevDay = false;
+    const data = await supResController(symbol, prevDay);
     if (contentType && contentType.includes("application/json")) {
       return new Response(JSON.stringify(data), { status: 200 });
     }
