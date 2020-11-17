@@ -279,7 +279,7 @@ function timeConverter(UNIX_timestamp) {
   return time;
 }
 
-function supResHtmlTemplate(data) {
+function supResHtmlTemplate(data, assets) {
   const {
     timestamp,
     symbol,
@@ -456,7 +456,7 @@ function supResHtmlTemplate(data) {
 
 
               <p class="powered">POWERED BY</p>
-              <img alt="Cloudflare Worker" src="https://blog.cloudflare.com/content/images/2019/06/45DEDC7B-B31F-461C-B786-12FBAF1A5391.png" width="150px" />
+              <img alt="Cloudflare Worker" src="${assets.workersLogo}" width="150px" />
               </div>
 
               <script>
@@ -528,10 +528,14 @@ async function handleSupResRequests(request) {
     if (!symbol) symbol = "AAPL";
     if (!prevDay) prevDay = false;
     const data = await supResController(symbol, prevDay);
+    const workersLogo = await MARKETWATCH_MISC.get("WORKERS_LOGO"); // get assets from KV
     if (contentType && contentType.includes("application/json")) {
       return new Response(JSON.stringify(data), { status: 200 });
     }
-    return renderHtmlContent(supResHtmlTemplate(data));
+    const assets = {
+      workersLogo
+    };
+    return renderHtmlContent(supResHtmlTemplate(data, assets));
   } catch (err) {
     return new Response(err, { status: 400 });
   }
